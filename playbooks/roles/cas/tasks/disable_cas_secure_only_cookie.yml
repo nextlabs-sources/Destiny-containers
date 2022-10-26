@@ -1,0 +1,9 @@
+---
+- name: "Disable Secure SSO Cookie Requirement in ticketGrantingTicketCookieGenerator.xml"
+  xml:
+    file: "{{ install_home }}/apps/cas/WEB-INF/spring-configuration/ticketGrantingTicketCookieGenerator.xml"
+    xpath: //*[name()='bean' and @id='ticketGrantingTicketCookieGenerator']
+    namespaces:
+      p: http://www.springframework.org/schema/p
+    attribute: p:cookieSecure
+    value: "false"

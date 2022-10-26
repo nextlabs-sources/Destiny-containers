@@ -1,0 +1,7 @@
+---
+- name: "Add JSPF format to tomcat Servlet Mappings"
+  xml:
+    file: "{{ catalina_home }}/conf/web.xml"
+    xpath: //*[name()='servlet-mapping' and ./*[name()='servlet-name' and .='jsp']]
+    add_children:
+      - url-pattern: "*.jspf"

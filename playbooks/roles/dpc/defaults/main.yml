@@ -1,0 +1,2 @@
+---
+docker_entrypoint_home: /usr/local/bin

@@ -1,0 +1,57 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: jpc
+spec:
+  selector:
+    app: jpc
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: jpc-deployment
+spec:
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: jpc
+    spec:
+      containers:
+        - image: 579292207088.dkr.ecr.us-west-2.amazonaws.com/platform/dpc:latest
+          name: jpc
+          env:
+            - name: DABS_HOST
+              value: dabs-internal
+          resources:
+            requests:
+              cpu: 500m
+              memory: 500Mi
+          ports:
+            - protocol: TCP
+              containerPort: 8080
+      restartPolicy: Always
+
+---
+
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: jpc
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1beta1
+    kind: Deployment
+    name: jpc-deployment
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 50

@@ -1,0 +1,35 @@
+---
+- name: Create necessary dabs folders
+  file:
+    path: "{{ install_home }}/{{ item }}"
+    state: directory
+    recurse: true
+    mode: 0755
+  with_items:
+    - "apps"
+    - "certificates"
+    - "configuration"
+    - "tools"
+- name: "Copy tools artifacts"
+  copy:
+    src: "{{ artifacts_path }}/tools/{{ item }}"
+    dest: "{{ install_home }}/tools/"
+  with_items:
+    - "common"
+    - "crypt"
+- name: Copy apps
+  copy:
+    src: "{{ artifacts_path }}/apps/{{ item }}"
+    dest: "{{ install_home }}/apps/"
+  with_items:
+    - "dac.war"
+    - "dcsf.war"
+- name: Create server-template.xml
+  template:
+    src: server-template.xml.j2
+    dest: "{{ install_home }}/configuration/server-template.xml"
+- name: Create entrypoint for container
+  template:
+    src: entrypoint.j2
+    dest: "{{ docker_entrypoint_home }}/entrypoint"
+    mode: "0755"

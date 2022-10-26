@@ -1,0 +1,37 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = 'dac' ]; then
+  if [ -z "${SSL_PASSPHRASE}" ]; then
+    echo "SSL_PASSPHRASE (DCC keystore and truststore jks encrypted password) env is not defined, exit"
+    exit 1
+  elif [ -z "${DMS_HOST}" ]; then
+    echo "DMS_HOST env is not defined, exit"
+    exit 1
+  else
+    # Only set INTERNAL_PORT if not already set
+    [ -z "$INTERNAL_PORT" ] && INTERNAL_PORT=8443
+    # Only set DMS_PORT if not already set
+    [ -z "$DMS_PORT" ] && DMS_PORT=8443
+
+    # Get hostname
+    HOSTNAME=`hostname -f`
+    # Set EXTERNAL_HOST to HOSTNAME if not already set
+    [ -z "$EXTERNAL_HOST" ] && EXTERNAL_HOST=$HOSTNAME
+
+    # encrypt the ssl passphrase password
+    GENERATED_KEY=`java -jar "{{ install_home }}/tools/crypt/crypt.jar" -w $SSL_PASSPHRASE`
+    # Generate server.xml
+    sed -e "s|\[GENERATED_KEY\]|$GENERATED_KEY|g" \
+        -e "s|\[EXTERNAL_HOST\]|$EXTERNAL_HOST|g" \
+        -e "s|\[INTERNAL_PORT\]|$INTERNAL_PORT|g" \
+        -e "s|\[DMS_HOST\]|$DMS_HOST|g" \
+        -e "s|\[DMS_PORT\]|$DMS_PORT|g" \
+        "{{ install_home }}/configuration/server-template.xml" > "{{ install_home }}/configuration/server.xml"
+    
+    shift
+    exec "$@"
+  fi
+else
+  exec "$@"
+fi

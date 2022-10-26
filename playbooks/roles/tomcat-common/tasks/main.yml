@@ -1,0 +1,46 @@
+---
+- include: resolve_catalina_home.yml
+- name: Remove all tomcat example apps
+  file:
+    path: "{{ catalina_home }}/webapps/"
+    state: absent
+- name: Create tomcat webapps folder
+  file:
+    path: "{{ catalina_home }}/webapps"
+    state: directory
+    recurse: true
+    mode: 0755
+- name: Create tomcat shared lib folder if not exist
+  file:
+    path: "{{ catalina_home }}/shared/lib"
+    state: directory
+    recurse: true
+    mode: 0755
+- name: Create tomcat endorsed folder if not exist
+  file:
+    path: "{{ catalina_home }}/endorsed"
+    state: directory
+    recurse: true
+    mode: 0755
+- name: Copy tomcat lib jar
+  copy:
+    src: "{{ artifacts_path }}/{{ item }}"
+    dest: "{{ catalina_home }}/lib/"
+  with_items: "{{ tomcat_lib_jars }}"
+  when: tomcat_lib_jars is defined and tomcat_lib_jars
+- name: Copy tomcat shared lib jar
+  copy:
+    src: "{{ artifacts_path }}/{{ item }}"
+    dest: "{{ catalina_home }}/shared/lib/"
+  with_items: "{{ tomcat_shared_jars }}"
+  when: tomcat_shared_jars is defined and tomcat_shared_jars
+- name: Copy tomcat endorsed lib
+  copy:
+    src: "{{ artifacts_path }}/{{ item }}"
+    dest: "{{ catalina_home }}/endorsed/"
+  with_items: "{{ tomcat_endorsed_jars }}"
+  when: tomcat_endorsed_jars is defined and tomcat_endorsed_jars
+- name: Replace catalina.properties
+  copy:
+    src: catalina.properties
+    dest: "{{ catalina_home }}/conf/catalina.properties"

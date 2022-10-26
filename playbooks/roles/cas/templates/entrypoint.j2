@@ -1,0 +1,55 @@
+#!/bin/bash
+set -e
+
+if [ "$1" = 'cas' ]; then
+  if [ -z "${CAS_SERVER_NAME}" ]; then
+    echo "CAS_SERVER_NAME env is not defined, exit"
+    exit 1
+  elif [ -z "${DATABASE_CONNECTSTRING}" ] \
+    || [ -z "${DATABASE_USERNAME}" ] \
+    || [ -z "${DATABASE_PASSWORD}" ]
+  then
+    echo "One of env of DATABASE_USERNAME, DATABASE_PASSWORD and DATABASE_CONNECTSTRING is not defined, exit"
+    exit 1
+  elif [ -z "${DATABASE_CONNECTSTRING}" ] \
+    || [ -z "${DATABASE_USERNAME}" ] \
+    || [ -z "${DATABASE_PASSWORD}" ]
+  then
+    echo "One of env of DATABASE_USERNAME, DATABASE_PASSWORD and DATABASE_CONNECTSTRING is not defined, exit"
+    exit 1
+  else
+    if [[ "$DATABASE_CONNECTSTRING" == sqlserver* ]]; then
+      DATABASE_TYPE=MSSQL
+      DATABASE_DRIVER=com.microsoft.sqlserver.jdbc.SQLServerDriver
+      DATABASE_DIALECT=org.hibernate.dialect.SQLServerDialect
+    elif [[ "$DATABASE_CONNECTSTRING" == oracle* ]]; then
+      DATABASE_TYPE=ORACLE
+      DATABASE_DRIVER=oracle.jdbc.driver.OracleDriver
+      DATABASE_DIALECT=org.hibernate.dialect.Oracle10gDialect
+    elif [[ "$DATABASE_CONNECTSTRING" == postgresql* ]]; then
+      DATABASE_TYPE=POSTGRES
+      DATABASE_DRIVER=org.postgresql.Driver
+      DATABASE_DIALECT=org.hibernate.dialect.PostgreSQL9Dialect
+    else
+      echo "Connection string not valid: " $DATABASE_CONNECTSTRING
+      exit 1
+    fi
+    # encrypt the db password
+    ENCRYPTED_DATABASE_PASSWORD=`java -jar "{{ install_home }}/tools/crypt/crypt.jar" -w $DATABASE_PASSWORD`
+
+    # Generate cas.properties
+    sed -e "s|\[CAS_SERVER_NAME\]|$CAS_SERVER_NAME|g" \
+        -e "s|\[DATABASE_DIALECT\]|$DATABASE_DIALECT|g" \
+        -e "s|\[DATABASE_TYPE\]|$DATABASE_TYPE|g" \
+        -e "s|\[DATABASE_USERNAME\]|$DATABASE_USERNAME|g" \
+        -e "s|\[DATABASE_PASSWORD\]|$ENCRYPTED_DATABASE_PASSWORD|g" \
+        -e "s|\[DATABASE_CONNECTSTRING\]|jdbc:$DATABASE_CONNECTSTRING|g" \
+        -e "s|\[DATABASE_DRIVER\]|$DATABASE_DRIVER|g" \
+        "{{ install_home }}/configuration/cas-template.properties" > "{{ install_home }}/configuration/cas.properties"
+    
+    shift
+    exec "$@"
+  fi
+else
+  exec "$@"
+fi

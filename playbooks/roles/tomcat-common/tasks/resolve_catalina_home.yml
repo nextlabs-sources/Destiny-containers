@@ -1,0 +1,12 @@
+---
+- name: Set varialbe catalina_home from ENV if not defined
+  set_fact:
+    catalina_home: "{{ lookup('env','CATALINA_HOME') }}"
+  when: catalina_home is not defined
+# Determine if a path exists and is a directory.
+- stat:
+    path: "{{ catalina_home }}"
+  register: catalina_home_stat
+- fail:
+    msg: "catalina_home is not defined or incorrect"
+  when: catalina_home_stat.stat.isdir is not defined or not catalina_home_stat.stat.isdir

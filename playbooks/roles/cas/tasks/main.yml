@@ -1,0 +1,55 @@
+---
+- include: roles/tomcat-common/tasks/resolve_catalina_home.yml
+- name: Create necessary cas folders
+  file:
+    path: "{{ install_home }}/{{ item }}"
+    state: directory
+    recurse: true
+    mode: 0755
+  with_items:
+    - "apps"
+    - "apps/cas"
+    - "configuration"
+    - "license"
+    - "tools"
+- name: "Copy tools artifacts"
+  copy:
+    src: "{{ artifacts_path }}/tools/{{ item }}"
+    dest: "{{ install_home }}/tools/"
+  with_items:
+    - "common"
+    - "crypt"
+- name: Unpack app (war file) to apps folder
+  unarchive:
+    remote_src: true
+    src: "{{ artifacts_path }}/apps/cas.war"
+    dest: "{{ install_home }}/apps/cas"
+    mode: 0644
+- include: disable_cas_secure_only_cookie.yml
+- include: change_cas_datasource_database_password_variable_name.yml
+- name: Create server.xml
+  template:
+    src: server.xml.j2
+    dest: "{{ install_home }}/configuration/server.xml"
+- name: Create cas-template.properties
+  template:
+    src: cas-template.properties.j2
+    dest: "{{ install_home }}/configuration/cas-template.properties"
+- name: Copy license jar
+  copy:
+    src: "{{ artifacts_path }}/shared/lib/license.jar"
+    dest: "{{ install_home }}/license/"
+- name: Copy license.dat
+  copy:
+    src: "{{ artifacts_path }}/shared/license.dat"
+    dest: "{{ install_home }}/license/"
+- name: Create entrypoint for container
+  template:
+    src: entrypoint.j2
+    dest: "{{ docker_entrypoint_home }}/entrypoint"
+    mode: "0755"
+- name: Create tomcat setenv.sh
+  template:
+    src: setenv.sh.j2
+    dest: "{{ catalina_home }}/bin/setenv.sh"
+    mode: 0755

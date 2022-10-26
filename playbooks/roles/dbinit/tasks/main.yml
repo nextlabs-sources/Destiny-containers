@@ -1,0 +1,35 @@
+---
+- name: "Create necessary dbinit folders"
+  file:
+    path: "{{ install_home }}/{{ item }}"
+    state: directory
+    recurse: true
+    mode: 0755
+  with_items:
+    - "tools"
+    - "server/configuration"
+- name: "Copy tools artifacts"
+  copy:
+    src: "{{ artifacts_path }}/tools/{{ item }}"
+    dest: "{{ install_home }}/tools/"
+  with_items:
+    - "common"
+    - "crypt"
+    - "dbInit"
+- name: "Copy server config artifacts"
+  copy:
+    src: "{{ artifacts_path }}/configuration/dms/{{ item }}"
+    dest: "{{ install_home }}/server/configuration/"
+  with_items:
+    - "configuration.digester.rules.xml"
+    - "Configuration.xsd"
+    - "configuration-template.xml"
+- name: "Create logging properties file for dbinit"
+  copy:
+    src: dbinit_logging.properties
+    dest: "{{ install_home }}/tools/dbInit/"
+- name: Create entrypoint for container
+  template:
+    src: entrypoint.j2
+    dest: "{{ docker_entrypoint_home }}/entrypoint"
+    mode: "0755"

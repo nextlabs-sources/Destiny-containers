@@ -1,0 +1,48 @@
+{
+  "variables": {
+    "destiny_artifacts": "",
+    "docker_image_name": "dps",
+    "docker_image_tag": "latest"
+  },
+  "builders": [
+    {
+      "type": "docker",
+      "image": "tomcat:8.0.42-jre8-alpine",
+      "run_command": ["-d", "-v", "{{user `destiny_artifacts`}}:/destiny_artifacts", "-i", "-t", "{{.Image}}", "/bin/sh"],
+      "commit": true,
+      "changes": [
+        "CMD [\"dps\", \"catalina.sh\", \"run\", \"-config\", \"/opt/policyserver/configuration/server.xml\"]",
+        "ENTRYPOINT [\"/usr/local/bin/entrypoint\"]",
+        "EXPOSE 8443"
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "apk update && apk add --no-cache ansible"
+      ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "playbooks/dps.yml",
+      "playbook_dir": "playbooks"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "apk del ansible && rm -rf /tmp/* && rm -rf /var/cache/apk/*"
+      ]
+    }
+  ],
+  "post-processors": [
+    [
+      {
+        "type": "docker-tag",
+        "repository": "{{ user `docker_image_name` }}",
+        "tag": "{{ user `docker_image_tag`}}"
+      }
+    ]
+  ]
+}

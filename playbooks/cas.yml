@@ -1,0 +1,15 @@
+---
+- hosts: 127.0.0.1
+  remote_user: root
+  vars:
+    artifacts_path: "/destiny_artifacts"
+  roles:
+    - role: tomcat-common
+      tomcat_lib_jars:
+        - shared/lib/crypt.jar
+      tomcat_shared_jars:
+        - shared/xlib/ojdbc6.jar
+        - shared/xlib/postgresql-9.2-1002.jdbc4.jar
+        - shared/xlib/sqljdbc4.jar
+      tomcat_endorsed_jars: []
+    - role: cas

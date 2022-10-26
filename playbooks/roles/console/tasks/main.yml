@@ -1,0 +1,58 @@
+---
+- name: Create necessary console folders
+  file:
+    path: "{{ install_home }}/{{ item }}"
+    state: directory
+    recurse: true
+    mode: 0755
+  with_items:
+    - "apps"
+    - "apps/console"
+    - "resources/help"
+    - "configuration"
+    - "license"
+    - "tools"
+- name: "Copy tools artifacts"
+  copy:
+    src: "{{ artifacts_path }}/tools/{{ item }}"
+    dest: "{{ install_home }}/tools/"
+  with_items:
+    - "common"
+    - "crypt"
+- name: Unpack app (war file) to apps folder
+  unarchive:
+    remote_src: true
+    src: "{{ artifacts_path }}/apps/control-center-console.war"
+    dest: "{{ install_home }}/apps/console"
+    mode: 0644
+- name: Copy license jar
+  copy:
+    src: "{{ artifacts_path }}/shared/lib/license.jar"
+    dest: "{{ install_home }}/license/"
+- name: Copy license.dat
+  copy:
+    src: "{{ artifacts_path }}/shared/license.dat"
+    dest: "{{ install_home }}/license/"
+- name: Create server.xml
+  template:
+    src: server.xml.j2
+    dest: "{{ install_home }}/configuration/server.xml"
+- name: Create cc-console-app-template.properties
+  template:
+    src: cc-console-app-template.properties.j2
+    dest: "{{ install_home }}/configuration/cc-console-app-template.properties"
+    mode: "0755"
+- name: "Create openaz-pep properties file for validator"
+  copy:
+    src: openaz-pep.properties
+    dest: "{{ install_home }}/configuration/"
+- name: Create entrypoint for container
+  template:
+    src: entrypoint.j2
+    dest: "{{ docker_entrypoint_home }}/entrypoint"
+    mode: "0755"
+- name: Create tomcat setenv.sh
+  template:
+    src: setenv.sh.j2
+    dest: "{{ catalina_home }}/bin/setenv.sh"
+    mode: 0755

@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = 'dpc' ]; then
+  if [ -z "${DABS_HOST}" ]; then
+    echo "DABS_HOST is not defined, exit"
+    exit 1
+  else
+    if [ -f "{{ dpc_path }}/config/commprofile.xml" ]; then
+      echo "commprofile exist, skip creating commprofile"
+    else
+      sed "s|<DABSLocation\s*value=\"[^\"]*\"\s*/>|<DABSLocation value=\"https://${DABS_HOST}:8443/dabs\"/>|g" \
+        "{{ dpc_path }}/config/commprofile.template.xml" > "{{ dpc_path }}/config/commprofile.xml"
+      echo "created commprofile"
+    fi
+    shift
+    exec "$@"
+  fi
+else
+  exec "$@"
+fi

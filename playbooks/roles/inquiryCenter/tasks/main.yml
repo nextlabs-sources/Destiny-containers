@@ -1,0 +1,47 @@
+---
+- name: Create necessary reporter folders
+  file:
+    path: "{{ install_home }}/{{ item }}"
+    state: directory
+    recurse: true
+    mode: 0755
+  with_items:
+    - "apps"
+    - "apps/inquiryCenter"
+    - "certificates"
+    - "configuration"
+- name: "Copy tools artifacts"
+  copy:
+    src: "{{ artifacts_path }}/tools/{{ item }}"
+    dest: "{{ install_home }}/tools/"
+  with_items:
+    - "common"
+    - "crypt"
+- name: Copy apps
+  copy:
+    src: "{{ artifacts_path }}/apps/{{ item }}"
+    dest: "{{ install_home }}/apps/"
+  with_items:
+    - "dcsf.war"
+- name: Unpack app (war file) to apps folder
+  unarchive:
+    remote_src: true
+    src: "{{ artifacts_path }}/apps/inquiryCenter.war"
+    dest: "{{ install_home }}/apps/inquiryCenter"
+    mode: 0644
+- name: Copy configurations
+  copy:
+    src: "{{ artifacts_path }}/configuration/inquiryCenter/{{ item }}"
+    dest: "{{ install_home }}/configuration/"
+  with_items:
+    - dashboard.xml
+- name: Create server-template.xml
+  template:
+    src: server-template.xml.j2
+    dest: "{{ install_home }}/configuration/server-template.xml"
+- name: Create entrypoint for container
+  template:
+    src: entrypoint.j2
+    dest: "{{ docker_entrypoint_home }}/entrypoint"
+    mode: "0755"
+- include: configure_reporter_web_xml.yml

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Server port="8005" shutdown="SHUTDOWN">
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener"/>
+  <!-- Security listener. Documentation at /docs/config/listeners.html
+  <Listener className="org.apache.catalina.security.SecurityListener" />
+  -->
+  <!--APR library loader. Documentation at /docs/apr.html -->
+  <Listener SSLEngine="on" className="org.apache.catalina.core.AprLifecycleListener"/>
+  <!-- Prevent memory leaks due to use of particular java/javax APIs-->
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener"/>
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener"/>
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener"/>
+
+  <!-- Global JNDI resources
+       Documentation at /docs/jndi-resources-howto.html
+  -->
+  <GlobalNamingResources>
+    <!-- Editable user database that can also be used by
+         UserDatabaseRealm to authenticate users
+    -->
+  </GlobalNamingResources>
+
+  <Service name="CE-Core">
+    <Connector port="8080" protocol="HTTP/1.1"
+        connectionTimeout="20000"
+        redirectPort="8443"/>
+
+    <Engine name="CE-Core" defaultHost="localhost">
+      <Host name="localhost"
+          autoDeploy="false"
+          unpackWARs="false">
+
+        <!--[DPC_COMPONENT_BEGIN]-->
+        <Context path="/dpc" reloadable="false" docBase="${catalina.home}/webapps/dpc.war">
+          <Parameter name="ComponentName"  value="dpc"/>
+          <Parameter name="InstallHome" value="${catalina.home}"/>
+          <Parameter name="Location" value="http://dpc_host:8080/dpc"/>
+          <Parameter name="AgentType" value="PORTAL"/>
+          <Parameter name="RootDirectory" value="{{ dpc_path }}"/>
+          <Parameter name="EnableJWTAuthenticationFilter" value="true"/>
+        </Context>
+        <!--[DPC_COMPONENT_END]-->
+      </Host>
+    </Engine>
+  </Service>
+</Server>

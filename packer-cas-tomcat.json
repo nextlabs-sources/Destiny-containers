@@ -1,0 +1,47 @@
+{
+  "variables": {
+    "destiny_artifacts": "",
+    "docker_image_name": "cas",
+    "docker_image_tag": "latest"
+  },
+  "builders": [
+    {
+      "type": "docker",
+      "image": "tomcat:8-jre8-alpine",
+      "run_command": ["-d", "-v", "{{user `destiny_artifacts`}}:/destiny_artifacts", "-i", "-t", "{{.Image}}", "/bin/sh"],
+      "commit": true,
+      "changes": [
+        "CMD [\"cas\", \"catalina.sh\", \"run\", \"-config\", \"/opt/policyserver/configuration/server.xml\"]",
+        "ENTRYPOINT [\"/usr/local/bin/entrypoint\"]"
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "apk update && apk add --no-cache ansible bash ca-certificates py-lxml && ansible-galaxy install cmprescott.xml"
+      ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "playbooks/cas.yml",
+      "playbook_dir": "playbooks"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "apk del ansible ca-certificates py-lxml && rm -rf /tmp/* && rm -rf /var/cache/apk/* && rm -rf /etc/ansible"
+      ]
+    }
+  ],
+  "post-processors": [
+    [
+      {
+        "type": "docker-tag",
+        "repository": "{{ user `docker_image_name` }}",
+        "tag": "{{ user `docker_image_tag`}}"
+      }
+    ]
+  ]
+}

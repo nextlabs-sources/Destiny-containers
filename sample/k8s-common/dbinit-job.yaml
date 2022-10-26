@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dbinit
+spec:
+  template:
+    metadata:
+      name: dbinit
+    spec:
+      containers:
+        - name: dbinit
+          image: 579292207088.dkr.ecr.us-west-2.amazonaws.com/platform/dbinit:latest
+          env:
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: cc-secrets
+                  key: databaseUsername
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cc-secrets
+                  key: databasePassword
+            - name: DATABASE_CONNECTSTRING
+              valueFrom:
+                configMapKeyRef:
+                  name: cc-configmap
+                  key: databaseConnectstring
+            - name: ADMINISTRATOR_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cc-secrets
+                  key: administratorPassword
+          args: ["dbinit", "install"]
+      restartPolicy: Never

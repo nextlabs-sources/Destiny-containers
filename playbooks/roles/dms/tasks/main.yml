@@ -1,0 +1,52 @@
+---
+- name: Create necessary dms folders
+  file:
+    path: "{{ install_home }}/{{ item }}"
+    state: directory
+    recurse: true
+    mode: 0755
+  with_items:
+    - "apps"
+    - "certificates"
+    - "configuration"
+    - "license"
+    - "tools"
+- name: "Copy tools artifacts"
+  copy:
+    src: "{{ artifacts_path }}/tools/{{ item }}"
+    dest: "{{ install_home }}/tools/"
+  with_items:
+    - "common"
+    - "crypt"
+- name: Copy apps
+  copy:
+    src: "{{ artifacts_path }}/apps/{{ item }}"
+    dest: "{{ install_home }}/apps/"
+  with_items:
+    - "dms.war"
+    - "dcsf.war"
+- name: Copy configurations
+  copy:
+    src: "{{ artifacts_path }}/configuration/dms/{{ item }}"
+    dest: "{{ install_home }}/configuration/"
+  with_items:
+    - "configuration.digester.rules.xml"
+    - "Configuration.xsd"
+    - "configuration-template.xml"
+- name: Copy license jar
+  copy:
+    src: "{{ artifacts_path }}/shared/lib/license.jar"
+    dest: "{{ install_home }}/license/"
+- name: Copy license.dat
+  copy:
+    src: "{{ artifacts_path }}/shared/license.dat"
+    dest: "{{ install_home }}/license/"
+- name: Create server-template.xml
+  template:
+    src: server-template.xml.j2
+    dest: "{{ install_home }}/configuration/server-template.xml"
+- name: Create entrypoint for container
+  template:
+    src: entrypoint.j2
+    dest: "{{ docker_entrypoint_home }}/entrypoint"
+    mode: "0755"

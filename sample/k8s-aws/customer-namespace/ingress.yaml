@@ -1,0 +1,29 @@
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cc-ingress
+  namespace: customer-namespace
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: kube-cc.platform.nextlabs.solutions
+    http:
+      paths:
+      - path: /cas
+        backend:
+          serviceName: cas
+          servicePort: 8080
+      - path: /console
+        backend:
+          serviceName: console
+          servicePort: 8080
+      - path: /reporter
+        backend:
+          serviceName: reporter
+          servicePort: 8080
+      - path: /administrator
+        backend:
+          serviceName: administrator
+          servicePort: 8080

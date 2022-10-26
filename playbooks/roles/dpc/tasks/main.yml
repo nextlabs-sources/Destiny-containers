@@ -1,0 +1,55 @@
+---
+- include: roles/tomcat-common/tasks/resolve_catalina_home.yml
+- name: Set varialbe dpc_path
+  set_fact:
+    dpc_path: "{{ catalina_home }}/nextlabs/dpc"
+- name: Create necessary dpc folders
+  file:
+    path: "{{ dpc_path }}/{{ item }}"
+    state: directory
+    recurse: true
+    mode: 0755
+  with_items:
+    - "logs"
+    - "jservice/config"
+    - "jservice/jar"
+    - "config"
+    - "config/security"
+- name: Copy dpc.war
+  copy:
+    src: "{{ artifacts_path }}/apps/dpc.war"
+    dest: "{{ catalina_home }}/webapps/"
+- name: Copy temp_agent-keystore.jks
+  copy:
+    src: "{{ artifacts_path }}/configuration/dpc/config/security/temp_agent-keystore.jks"
+    dest: "{{ dpc_path }}/config/security/"
+- name: Copy dpc config files
+  copy:
+    src: "{{ artifacts_path }}/configuration/dpc/config/{{ item }}"
+    dest: "{{ dpc_path }}/config/"
+  with_items:
+    - agentprofile.xml
+    - commprofile.template.xml
+    - mapping.xml
+- name: Copy oauth2-secret plugin jar
+  copy:
+    src: "{{ artifacts_path }}/plugins/Oauth2JWTSecret-Plugin/Policy Controller/Oauth2JWTSecret-Plugin-client.jar"
+    dest: "{{ dpc_path }}/jservice/jar/"
+- name: Copy oauth2-secret plugin config
+  copy:
+    src: "{{ artifacts_path }}/plugins/Oauth2JWTSecret-Plugin/Policy Controller/JwtSecretClient.properties"
+    dest: "{{ dpc_path }}/jservice/config/"
+- name: Modify oauth2-secret plugin config
+  replace:
+    dest: "{{ dpc_path }}/jservice/config/JwtSecretClient.properties"
+    regexp: '^jar-path\s?=\s?.*$'
+    replace: "jar-path = {{ dpc_path }}/jservice/jar/Oauth2JWTSecret-Plugin-client.jar"
+- name: Create server.xml
+  template:
+    src: server.xml.j2
+    dest: "{{ catalina_home }}/conf/server.xml"
+- name: Create entrypoint for container
+  template:
+    src: entrypoint.j2
+    dest: "{{ docker_entrypoint_home }}/entrypoint"
+    mode: "0755"

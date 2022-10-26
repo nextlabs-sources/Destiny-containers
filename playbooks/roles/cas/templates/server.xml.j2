@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE server [
+  <!ENTITY install_home "{{ install_home }}">
+]>
+<Server port="8005" shutdown="SHUTDOWN">
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener"/>
+  <!-- Security listener. Documentation at /docs/config/listeners.html
+  <Listener className="org.apache.catalina.security.SecurityListener" />
+  -->
+  <!--APR library loader. Documentation at /docs/apr.html -->
+  <Listener SSLEngine="off" className="org.apache.catalina.core.AprLifecycleListener"/>
+  <!-- Prevent memory leaks due to use of particular java/javax APIs-->
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener"/>
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener"/>
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener"/>
+
+  <!-- Global JNDI resources
+       Documentation at /docs/jndi-resources-howto.html
+  -->
+  <GlobalNamingResources>
+    <!-- Editable user database that can also be used by
+         UserDatabaseRealm to authenticate users
+    -->
+  </GlobalNamingResources>
+
+  <Service>
+    <Connector port="8080"
+      enableLookups="false"
+      protocol="org.apache.coyote.http11.Http11Nio2Protocol"
+      scheme="http">
+    </Connector>
+
+    <Engine name="CE-Apps" defaultHost="localhost">
+      <Host name="localhost"
+        autoDeploy="false"
+        unpackWARs="false">
+
+        <!--[CAS_BEGIN]-->
+        <Context path="/cas" reloadable="false" docBase="&install_home;/apps/cas" workDir="${catalina.base}/work/cas">
+        </Context>
+        <!--[CAS_END]-->
+      </Host>
+    </Engine>
+  </Service>
+</Server>

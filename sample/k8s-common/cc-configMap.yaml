@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cc-configmap
+data:
+  databaseConnectstring: postgresql://postgres:5432/postgres
+  externalServerName: https://{external_dns}
+  externalDabsHost: clarion-customer

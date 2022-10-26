@@ -1,0 +1,78 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort:  5432
+  type: ClusterIP
+  clusterIP: None
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pgvolume
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 20Gi
+  persistentVolumeReclaimPolicy: Recycle
+  hostPath:
+    path: /data/pgvolume/
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pgvolumeclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:9.5-alpine
+          volumeMounts:
+            - mountPath: "/var/lib/postgresql/data/pgdata"
+              name: pgdata
+          env:
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cc-secrets
+                  key: databaseUsername
+            - name: POSTGRES_DB
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cc-secrets
+                  key: databasePassword
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: pgvolumeclaim

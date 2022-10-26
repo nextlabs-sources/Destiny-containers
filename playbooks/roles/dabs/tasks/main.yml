@@ -1,0 +1,46 @@
+---
+- name: Create necessary dabs folders
+  file:
+    path: "{{ install_home }}/{{ item }}"
+    state: directory
+    recurse: true
+    mode: 0755
+  with_items:
+    - "apps"
+    - "certificates"
+    - "configuration"
+    - "logqueue"
+    - "tools"
+    - "plugins/jar"
+    - "plugins/config"
+- name: "Copy tools artifacts"
+  copy:
+    src: "{{ artifacts_path }}/tools/{{ item }}"
+    dest: "{{ install_home }}/tools/"
+  with_items:
+    - "common"
+    - "crypt"
+- name: Copy apps
+  copy:
+    src: "{{ artifacts_path }}/apps/{{ item }}"
+    dest: "{{ install_home }}/apps/"
+  with_items:
+    - "dabs.war"
+    - "dcsf.war"
+- name: Copy oauth2-secret plugin jar
+  copy:
+    src: "{{ artifacts_path }}/plugins/Oauth2JWTSecret-Plugin/Control Center/Oauth2JWTSecret-Plugin-server.jar"
+    dest: "{{ install_home }}/plugins/jar/"
+- name: Copy oauth2-secret plugin config
+  copy:
+    src: "{{ artifacts_path }}/plugins/Oauth2JWTSecret-Plugin/Control Center/JwtSecretServer.properties"
+    dest: "{{ install_home }}/plugins/config/"
+- name: Create server-template.xml
+  template:
+    src: server-template.xml.j2
+    dest: "{{ install_home }}/configuration/server-template.xml"
+- name: Create entrypoint for container
+  template:
+    src: entrypoint.j2
+    dest: "{{ docker_entrypoint_home }}/entrypoint"
+    mode: "0755"

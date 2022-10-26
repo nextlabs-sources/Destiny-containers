@@ -1,0 +1,45 @@
+---
+- name: "Copy mgmtConsole web.xml"
+  copy:
+    src: "{{ install_home }}/apps/mgmtConsole/WEB-INF/web.xml"
+    dest: "{{ install_home }}/apps/mgmtConsole/WEB-INF/web-template.xml"
+- name: "Set cas server server.name for Authentication Filter"
+  xml:
+    file: "{{ install_home }}/apps/mgmtConsole/WEB-INF/web-template.xml"
+    xpath: //*[name()='filter' and ./*[name()='filter-name' and .='CAS Authentication Filter']]/*[name()='init-param' and ./*[name()='param-name' and .='casServerLoginUrl']]/*[name()='param-value']
+    value: "[CAS_AUTHENTICATION_SERVER_NAME]/cas/login"
+- name: "Set cas client server.name for Authentication Filter"
+  xml:
+    file: "{{ install_home }}/apps/mgmtConsole/WEB-INF/web-template.xml"
+    xpath: //*[name()='filter' and ./*[name()='filter-name' and .='CAS Authentication Filter']]/*[name()='init-param' and ./*[name()='param-name' and .='serverName']]/*[name()='param-value']
+    value: "[CAS_CLIENT_SERVER_NAME]"
+- name: "Set cas server server.name for CAS Validation Filter"
+  xml:
+    file: "{{ install_home }}/apps/mgmtConsole/WEB-INF/web-template.xml"
+    xpath: //*[name()='filter' and ./*[name()='filter-name' and .='CAS Validation Filter']]/*[name()='init-param' and ./*[name()='param-name' and .='casServerUrlPrefix']]/*[name()='param-value']
+    value: "[CAS_TICKET_VALIDATION_SERVER_NAME]/cas"
+- name: "Set cas client server.name for CAS Validation Filter"
+  xml:
+    file: "{{ install_home }}/apps/mgmtConsole/WEB-INF/web-template.xml"
+    xpath: //*[name()='filter' and ./*[name()='filter-name' and .='CAS Validation Filter']]/*[name()='init-param' and ./*[name()='param-name' and .='serverName']]/*[name()='param-value']
+    value: "[CAS_CLIENT_SERVER_NAME]"
+- name: "Set loginUrl server.name for Logout Filter"
+  xml:
+    file: "{{ install_home }}/apps/mgmtConsole/WEB-INF/web-template.xml"
+    xpath: //*[name()='filter' and ./*[name()='filter-name' and .='Logout Filter']]/*[name()='init-param' and ./*[name()='param-name' and .='loginUrl']]/*[name()='param-value']
+    value: "[CAS_CLIENT_SERVER_NAME]/administrator"
+- name: "Set cas server server.name for Logout Filter"
+  xml:
+    file: "{{ install_home }}/apps/mgmtConsole/WEB-INF/web-template.xml"
+    xpath: //*[name()='filter' and ./*[name()='filter-name' and .='Logout Filter']]/*[name()='init-param' and ./*[name()='param-name' and .='casServerLogoutUrl']]/*[name()='param-value']
+    value: "[CAS_AUTHENTICATION_SERVER_NAME]/cas/logout?service="
+- name: "Set cas server server.name for CAS Single Sign Out Filter"
+  xml:
+    file: "{{ install_home }}/apps/mgmtConsole/WEB-INF/web-template.xml"
+    xpath: //*[name()='filter' and ./*[name()='filter-name' and .='CAS Single Sign Out Filter']]/*[name()='init-param' and ./*[name()='param-name' and .='casServerUrlPrefix']]/*[name()='param-value']
+    value: "[CAS_AUTHENTICATION_SERVER_NAME]/cas"
+- name: "Disable secure cookie"
+  xml:
+    file: "{{ install_home }}/apps/mgmtConsole/WEB-INF/web-template.xml"
+    xpath: //*[name()='session-config']/*[name()='cookie-config']/*[name()='secure']
+    ensure: absent

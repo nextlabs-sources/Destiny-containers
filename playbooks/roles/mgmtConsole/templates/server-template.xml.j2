@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE server [
+  <!ENTITY install_home "{{ install_home }}">
+]>
+<Server port="8005" shutdown="SHUTDOWN">
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener"/>
+  <!-- Security listener. Documentation at /docs/config/listeners.html
+  <Listener className="org.apache.catalina.security.SecurityListener" />
+  -->
+  <!--APR library loader. Documentation at /docs/apr.html -->
+  <Listener SSLEngine="on" className="org.apache.catalina.core.AprLifecycleListener"/>
+  <!-- Prevent memory leaks due to use of particular java/javax APIs-->
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener"/>
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener"/>
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener"/>
+
+  <!-- Global JNDI resources
+       Documentation at /docs/jndi-resources-howto.html
+  -->
+  <GlobalNamingResources>
+    <!-- Editable user database that can also be used by
+         UserDatabaseRealm to authenticate users
+    -->
+  </GlobalNamingResources>
+
+  <Service name="CE-Core">
+    <Connector port="[INTERNAL_PORT]"
+      enableLookups="false"
+      protocol="com.bluejungle.destiny.server.security.secureConnector.SecureHttp11Protocol"
+      scheme="https"
+      secure="true"
+      acceptCount="100"
+      SSLEnabled="true"
+      sslProtocol="TLS"
+      sslEnabledProtocols="TLSv1,TLSv1.1,TLSv1.2,SSLv2Hello"
+      connectionTimeout="60000"
+      keystoreFile="&install_home;/certificates/dcc-keystore.jks"
+      keystorePass="[GENERATED_KEY]"
+      keystoreType="JKS"
+      truststoreType="JKS"
+      truststoreFile="&install_home;/certificates/dcc-truststore.jks"
+      truststorePass="[GENERATED_KEY]"
+      clientAuth="true">
+    </Connector>
+
+    <Engine name="CE-Core" defaultHost="localhost">
+      <Host name="localhost"
+          autoDeploy="false"
+          unpackWARs="false">
+
+        <!--[DCSF_COMPONENT_BEGIN]-->
+          <Context path="/dcsf" reloadable="false" docBase="&install_home;/apps/dcsf.war" workDir="${catalina.base}/work/dcsf">
+            <Parameter name="ComponentName" value="[EXTERNAL_HOST]_dcsf"/>
+            <Parameter name="Location" value="https://[EXTERNAL_HOST]:[INTERNAL_PORT]/dcsf"/>
+            <Parameter name="DMSLocation" value="https://[DMS_HOST]:[DMS_PORT]/dms"/>
+            <Parameter name="InstallHome" value="&install_home;"/>
+          </Context>
+        <!--[DCSF_COMPONENT_END]-->
+      </Host>
+    </Engine>
+  </Service>
+  <Service>
+    <Connector port="8080"
+      enableLookups="false"
+      SSLEnabled="false"
+      secure="true"
+      scheme="https">
+    </Connector>
+
+    <Engine name="CE-Apps" defaultHost="localhost">
+      <Host name="localhost"
+        autoDeploy="false"
+        unpackWARs="false">
+        <Context path="/administrator" reloadable="false" docBase="&install_home;/apps/mgmtConsole" workDir="${catalina.base}/work/administrator">
+          <Parameter name="ComponentName" value="[EXTERNAL_HOST]_mgmt"/>
+          <Parameter name="Location" value="http://[EXTERNAL_HOST]:8080/mgmt"/>
+          <Parameter name="DMSLocation" value="https://[DMS_HOST]:[DMS_PORT]/dms"/>
+          <Parameter name="InstallHome" value="&install_home;"/>
+        </Context>
+      </Host>
+    </Engine>
+  </Service>
+</Server>

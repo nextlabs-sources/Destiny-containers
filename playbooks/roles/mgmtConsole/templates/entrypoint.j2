@@ -1,0 +1,56 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = 'mgmtconsole' ]; then
+  if [ -z "${SSL_PASSPHRASE}" ]; then
+    echo "SSL_PASSPHRASE (DCC keystore and truststore jks encrypted password) env is not defined, exit"
+    exit 1
+  elif [ -z "${DMS_HOST}" ]; then
+    echo "DMS_HOST env is not defined, exit"
+    exit 1
+  elif [ -z "${CAS_AUTHENTICATION_SERVER_NAME}" ]; then
+    echo "CAS_AUTHENTICATION_SERVER_NAME env is not defined, exit"
+    exit 1
+  else
+    # Only set INTERNAL_PORT if not already set
+    [ -z "$INTERNAL_PORT" ] && INTERNAL_PORT=8443
+    # Only set DMS_PORT if not already set
+    [ -z "$DMS_PORT" ] && DMS_PORT=8443
+    
+    if [ -z "$CAS_TICKET_VALIDATION_SERVER_NAME" ]; then
+      echo "CAS_TICKET_VALIDATION_SERVER_NAME env is not defined, use CAS_AUTHENTICATION_SERVER_NAME's value"
+      CAS_TICKET_VALIDATION_SERVER_NAME=$CAS_AUTHENTICATION_SERVER_NAME
+    fi
+
+    # Get hostname
+    HOSTNAME=`hostname -f`
+    # Set EXTERNAL_HOST to HOSTNAME if not already set
+    [ -z "$EXTERNAL_HOST" ] && EXTERNAL_HOST=$HOSTNAME
+    
+    # encrypt the ssl passphrase password
+    GENERATED_KEY=`java -jar "{{ install_home }}/tools/crypt/crypt.jar" -w $SSL_PASSPHRASE`
+
+    if [ -z "$CAS_CLIENT_SERVER_NAME" ]; then
+      echo "CAS_CLIENT_SERVER_NAME env is not defined, use http://$HOSTNAME:8080"
+      CAS_CLIENT_SERVER_NAME=http://$HOSTNAME:8080
+    fi
+    
+    # Generate server.xml
+    sed -e "s|\[GENERATED_KEY\]|$GENERATED_KEY|g" \
+        -e "s|\[EXTERNAL_HOST\]|$EXTERNAL_HOST|g" \
+        -e "s|\[INTERNAL_PORT\]|$INTERNAL_PORT|g" \
+        -e "s|\[DMS_HOST\]|$DMS_HOST|g" \
+        -e "s|\[DMS_PORT\]|$DMS_PORT|g" \
+        "{{ install_home }}/configuration/server-template.xml" > "{{ install_home }}/configuration/server.xml"
+    
+    # Modifiy administrator's web.xml
+    sed -e "s|\[CAS_AUTHENTICATION_SERVER_NAME\]|$CAS_AUTHENTICATION_SERVER_NAME|g" \
+        -e "s|\[CAS_TICKET_VALIDATION_SERVER_NAME\]|$CAS_TICKET_VALIDATION_SERVER_NAME|g" \
+        -e "s|\[CAS_CLIENT_SERVER_NAME\]|$CAS_CLIENT_SERVER_NAME|g" \
+        "{{ install_home }}/apps/mgmtConsole/WEB-INF/web-template.xml" > "{{ install_home }}/apps/mgmtConsole/WEB-INF/web.xml"
+    shift
+    exec "$@"
+  fi
+else
+  exec "$@"
+fi
